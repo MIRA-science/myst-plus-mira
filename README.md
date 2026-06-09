@@ -62,3 +62,11 @@ cat document.md | myst-plus-mira --compact -
 
 The CLI emits JSON for either the full MyST/mdast tree or only the MIRA
 directive nodes.
+
+## Use-case context
+
+The user story, constraints, and Phase-1 spec that motivate this parser live in
+[`use-case-context/`](./use-case-context/) — start with
+[`use-case-context/AGENTS.md`](./use-case-context/AGENTS.md). It documents the three
+build targets (parser / visualizer / transporter), the normative rules, and how this
+parser currently diverges from the spec.
