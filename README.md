@@ -65,8 +65,8 @@ directive nodes.
 
 ## Use-case context
 
-The user story, constraints, and Phase-1 spec that motivate this parser live in
-[`use-case-context/`](./use-case-context/) — start with
-[`use-case-context/AGENTS.md`](./use-case-context/AGENTS.md). It documents the three
+The user story, constraints, and syntax spec that motivate this parser live in
+[`docs/use-case-context/`](./docs/use-case-context/) — start with
+[`docs/use-case-context/AGENTS.md`](./docs/use-case-context/AGENTS.md). It documents the three
 build targets (parser / visualizer / transporter), the normative rules, and how this
-parser currently diverges from the spec.
+parser currently stands relative to the spec.
