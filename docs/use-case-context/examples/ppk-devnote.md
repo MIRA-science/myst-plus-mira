@@ -1,80 +1,117 @@
 ---
 title: "DevNote: PPK2 Energy Regeneration Effects"
 authors:
-  - name: Jane Researcher
-date: 2025-01-15
+  - name: Anton Molina
+date: 2026-01-15
 ---
 
 <!--
   Golden test fixture for the DG/MyST parser and visualizer.
-  Reproduced from the "Complete Example" in the Phase-1 spec
-  (../context/discourse-graphs-myst-spec.md). Modeled on Anton's real
-  PPK cell-free-expression DevNote (bnext-bio/nucleus-developer-notes,
-  dev-notes/08_ppk_cell/main.md).
+  Follows the v2 spec (../context/discourse-graphs-myst-spec.md): the full MIRA
+  node set, and the MyST-native convention — the directive ARGUMENT is the
+  human-readable statement, and :label:/:id: is the stable identifier.
+  Modeled on Anton's real PPK cell-free-expression DevNote
+  (bnext-bio/nucleus-developer-notes, dev-notes/08_ppk_cell/main.md).
 
   A correct parse yields:
-    - 2 claim nodes:    claim-ppk2-improves-expression, claim-dose-dependent
-    - 2 evidence nodes: ev-egfp-50pct-increase (supports 1 claim),
-                        ev-dose-response (supports 2 claims)
-    - 2 figure nodes:   fig-ppk-barplot (grounds ev-egfp-50pct-increase),
-                        fig-dose-response (grounds ev-dose-response)
-    - inline {claim}/{evidence} role references in the Discussion, all resolved
+    - 1 question:  q-ppk2-energy
+    - 2 claims:    claim-ppk2-improves  (addresses q-ppk2-energy),
+                   claim-dose-dependent (addresses q-ppk2-energy)
+    - 2 evidence:  ev-egfp-50pct   (supports claim-ppk2-improves),
+                   ev-dose-response (supports both claims)
+    - 2 studies:   study-ppk-egfp  (grounds ev-egfp-50pct,    follows protocol-cellfree-fluor),
+                   study-ppk-dose  (grounds ev-dose-response, follows protocol-cellfree-fluor)
+    - 1 protocol:  protocol-cellfree-fluor
+    - 1 request:   req-encapsulated (request-target claim-ppk2-improves)
+    - inline {claim}/{evidence}/{study} role references in the Discussion, all resolved
+
+  NOTE: figures render as ordinary MyST figures here. Linking a figure to the
+  evidence it depicts (the extended {figure} directive) is deferred — see the
+  spec's "Future Work" section.
 -->
 
 # PPK2 Energy Regeneration in Cell-Free Systems
 
+## Question
+
+:::{question} Does PPK2-based energy regeneration improve in vitro protein expression?
+:label: q-ppk2-energy
+:::
+
 ## Claims
 
-:::{claim} claim-ppk2-improves-expression
-:label: PPK2-based energy regeneration improves in vitro protein expression
+:::{claim} PPK2-based energy regeneration improves in vitro protein expression
+:label: claim-ppk2-improves
+:addresses: q-ppk2-energy
 
 Adding PPK2 to cell-free expression reactions provides a sustained
 energy source that increases overall protein yield.
 :::
 
-:::{claim} claim-dose-dependent
-:label: The PPK2 effect is dose-dependent within the tested range
+:::{claim} The PPK2 effect is dose-dependent within the tested range
+:label: claim-dose-dependent
+:addresses: q-ppk2-energy
 
-Expression improvements scale with PPK2 concentration between 0.1-10 mM.
+Expression improvements scale with PPK2 concentration between 0.1–10 mM.
 :::
 
 ## Evidence
 
-:::{evidence} ev-egfp-50pct-increase
-:label: PPK increases eGFP expression in Nucleus Cytosol by 50%
-:supports: claim-ppk2-improves-expression
+:::{evidence} PPK increases eGFP expression in Nucleus Cytosol by ~50%
+:label: ev-egfp-50pct
+:supports: claim-ppk2-improves
+:data: ./experiments/ppk-egfp-barplot.csv
 
-Fluorescence measurements show consistent 50% increase in eGFP signal
+Fluorescence measurements show a consistent 50% increase in eGFP signal
 when 5 mM PPK is added to reactions.
 :::
 
-:::{evidence} ev-dose-response
-:label: Expression scales linearly with PPK concentration
-:supports: [claim-ppk2-improves-expression, claim-dose-dependent]
+:::{evidence} Expression scales linearly with PPK concentration (R² = 0.94)
+:label: ev-dose-response
+:supports: [claim-ppk2-improves, claim-dose-dependent]
+:data: ./experiments/ppk-dose-response.csv
 
-Dose-response experiments (0.1, 1, 5, 10 mM PPK) show linear relationship
-between PPK concentration and expression level (R² = 0.94).
+Dose-response experiments (0.1, 1, 5, 10 mM PPK) show a linear relationship
+between PPK concentration and expression level.
 :::
 
-## Figures
+## Studies & protocol
 
-:::{figure} #fig-expression-barplot
-:label: fig-ppk-barplot
-:grounds: ev-egfp-50pct-increase
-
-Comparison of eGFP expression with and without PPK treatment.
+:::{study} Cell-free eGFP expression ± 5 mM PPK
+:label: study-ppk-egfp
+:grounds: ev-egfp-50pct
+:follows: protocol-cellfree-fluor
 :::
 
-:::{figure} ./figures/dose-response.png
-:label: fig-dose-response
+:::{study} PPK dose-response (0.1–10 mM)
+:label: study-ppk-dose
 :grounds: ev-dose-response
+:follows: protocol-cellfree-fluor
+:::
 
-Dose-response curve for PPK concentration vs. expression level.
+:::{protocol} Cell-free expression with eGFP fluorescence readout
+:label: protocol-cellfree-fluor
+
+Assemble Nucleus Cytosol reactions ± PPK; incubate at 37 °C; read eGFP
+fluorescence over time on a plate reader. (Link or embed the full protocol.)
+:::
+
+<!-- Ordinary MyST figure — no discourse relation (see spec Future Work). -->
+:::{figure} ./figures/ppk-dose-response.png
+:label: fig-dose-response
+
+Dose-response curve for PPK concentration vs. eGFP expression level.
 :::
 
 ## Discussion
 
-Our experiments provide {evidence}`ev-egfp-50pct-increase` supporting
-the hypothesis that {claim}`claim-ppk2-improves-expression`. The
+Our experiments provide {evidence}`ev-egfp-50pct` supporting
+{claim}`claim-ppk2-improves`, produced in {study}`study-ppk-egfp`. The
 {evidence}`ev-dose-response` further suggests this is not a threshold
 effect but scales with concentration.
+
+:::{request} Test whether the PPK effect holds in encapsulated reactions
+:label: req-encapsulated
+:request-target: claim-ppk2-improves
+:motivation: Establish whether sustained energy regeneration survives encapsulation before scaling up.
+:::

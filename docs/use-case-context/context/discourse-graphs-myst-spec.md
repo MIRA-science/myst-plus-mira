@@ -1,13 +1,15 @@
-# Discourse Graphs for MyST Markdown: Phase 1 Specification
+# Discourse Graphs for MyST Markdown: Specification
 
-**Version:** 1.0-draft  
-**Date:** 2025-12-17  
-**Authors:** 
+**Version:** 2.0-draft  
+**Date:** 2026-06-09  
+**Authors:**
 - Matt Akamatsu (ORCID: [0000-0002-0286-5310](https://orcid.org/0000-0002-0286-5310))
-- Claude Opus 4.5 (Anthropic, December 2025)
-Derived from a document drafted by Anton Molina (ORCID: [0000-0002-7253-2714](https://orcid.org/0000-0002-7253-2714))
+- Claude Opus 4.5 / 4.8 (Anthropic)
+Derived from a document drafted by Anton Molina (ORCID: [0000-0002-7253-2714](https://orcid.org/0000-0002-7253-2714)); grounded in the MIRA / Discourse Graphs LinkML schema.
 
 **Status:** Proposal
+
+> **What changed from v1 (2025-12-17).** v1 specified a deliberately minimal Phase‑1 vocabulary — two directives (`{claim}`, `{evidence}`) plus an extended `{figure}`. This v2 brings the spec in line with (a) the canonical **MIRA schema** — the *full complement of node types* (`Question`, `Claim`, `Evidence`, `Study`, `Protocol`, `Request`) and their real edges — and (b) the reference parser in [`MIRA-science/myst-plus-mira`](https://github.com/MIRA-science/myst-plus-mira), which already registers those six directives. The biggest concrete change: the directive **argument is now the human-readable statement/title**, and **`:label:` (or `:id:`) is the optional stable identifier** (MyST-native: `:label:` is the cross-reference target). This is the inverse of v1, where the argument was the id. The extended `{figure}` directive and several relations are deferred — see [Future Work](#future-work).
 
 ---
 
@@ -15,411 +17,409 @@ Derived from a document drafted by Anton Molina (ORCID: [0000-0002-7253-2714](ht
 
 In our lab, it is possible to make meaningful progress on an experimental or engineering workflow in a single day. However, current tools separate data from claims and do not support continuous workflows. They also make it challenging to rigorously share work across labs.
 
-This specification defines a set of MyST Markdown directives and roles for embedding **discourse graph** semantics directly into scientific documents. By creating fit-for-purpose Markdown syntax, we can promote better data management practices and enable collaboration at scale, making it possible for a distributed network of labs to collaboratively build a rich knowledge base.
+This specification defines a set of MyST Markdown **directives** and **roles** for embedding **discourse graph** semantics — the MIRA node grammar — directly into scientific documents (developer notes, Curvenote articles, Jupyter notebooks). By making the structure of a scientific argument explicit in the document, we can (1) render and visualize it in the published page, (2) extract a typed graph from the MyST AST, and (3) serialize a self-describing subgraph that travels into a collaborator's discourse graph.
 
 ### Goals
 
-1. Let researchers systematically make connections between conclusions and supporting evidence
-2. Provide a natural mechanism for keeping Developer Notes short and focused
-3. Enable connections to be identified between papers and across working groups
-4. Create a foundation for queryable databases combining formulations, designs, and performance data
+1. Let researchers systematically connect **questions → claims → evidence → the studies and protocols that produced it**.
+2. Keep developer notes short, modular, and focused.
+3. Make connections identifiable across notes, papers, and working groups.
+4. Provide a foundation for queryable databases combining formulations, designs, and performance data — and for cross-tool sharing.
 
-### Design Principles
+### Design principles
 
-- **Minimal syntax**: Two core directives, four relation types
-- **Progressive complexity**: Start simple, add detail as needed
-- **Stable references**: Optional IDs for robust cross-referencing
-- **MyST-native**: Follow existing MyST conventions for directives and roles
-
----
-
-## Core Concepts
-
-### The Discourse Graph Model
-
-Discourse graphs decompose scientific arguments into modular, reusable components:
-
-| Node Type | Description | Example |
-|-----------|-------------|---------|
-| **Claim** | An interpretive assertion or conclusion | "PPK2-based energy regeneration improves protein expression" |
-| **Evidence** | An empirical observation tied to data | "eGFP expression increased 50% with PPK treatment" |
-
-These nodes are connected by **relations**:
-
-| Relation | Meaning |
-|----------|---------|
-| `supports` | Evidence or claim supports another claim |
-| `opposes` | Evidence or claim contradicts another claim |
-| `informs` | Node provides context for another node |
-| `grounds` | Figure or data grounds an evidence statement |
-
-### The Three-Layer Structure
-
-```
-┌─────────────────────────────────────┐
-│  CLAIM                              │
-│  (interpretive statement)           │
-└─────────────────────────────────────┘
-          ▲ supports
-┌─────────────────────────────────────┐
-│  EVIDENCE                           │
-│  (empirical observation)            │
-└─────────────────────────────────────┘
-          ▲ grounds
-┌─────────────────────────────────────┐
-│  FIGURE / DATA                      │
-│  (visual or raw representation)     │
-└─────────────────────────────────────┘
-```
+- **MyST-native.** Use real directives and roles; `:label:` is the cross-reference id, as everywhere else in MyST.
+- **Complete but lightweight.** Cover the full MIRA node grammar, but keep per-node syntax minimal; advanced metadata is optional.
+- **Stable references, human-first.** The argument is the human statement; an optional `:label:`/`:id:` gives a stable handle for references and cross-document use.
+- **Progressive complexity.** Start with `{question}`/`{claim}`/`{evidence}`; add `{study}`/`{protocol}`/`{request}` as the work warrants.
+- **Schema-grounded.** Node types and edges map 1:1 onto the canonical MIRA LinkML schema, so a document serializes cleanly to JSON-LD/RDF.
 
 ---
 
-## Syntax Reference
+## Core concepts
 
-### The `{claim}` Directive
+### The MIRA node grammar
 
-Claims are interpretive statements—conclusions drawn from evidence. They are the "so what" of your research.
+Discourse graphs decompose scientific work into modular, typed, reusable nodes. MIRA defines six:
 
-**Syntax:**
+| Node | Directive | Definition | MIRA / DG class |
+|------|-----------|------------|-----------------|
+| **Question** | `{question}` | A scientific unknown we want to make known, addressable by research methods. | `mira:Question` (`dg:Question`) |
+| **Claim** | `{claim}` | An atomic, generalized assertion that (proposes to) answer a Question. | `mira:Claim` (`dg:Claim`) |
+| **Evidence** | `{evidence}` | A specific empirical observation from one application of a research method. | `mira:Evidence` (`dg:Evidence`, a `prov:Entity`) |
+| **Study** | `{study}` | A research activity/experiment that produced a data artifact. | `mira:Study` (`prov:Activity`) |
+| **Protocol** | `{protocol}` | The method/approach a Study follows to generate Evidence. | `mira:Protocol` (`prov:Activity`) |
+| **Request** | `{request}` | A requested-but-not-yet-existing experiment/analysis — the collaboration primitive. | `mira:Request` |
+
+Both `Claim` and `Evidence` are **Arguments** (they can `supports`/`opposes` a Claim).
+
+### The relations (edges)
+
+These are exactly the edges in the MIRA schema. Each is declared on its **source** node (the node whose domain it is):
+
+| Edge | Source → Target | Declared on | Meaning |
+|------|-----------------|-------------|---------|
+| `addresses` | Claim → Question | `{claim}` | the claim proposes to answer the question |
+| `supports` | Evidence \| Claim → Claim | `{evidence}` / `{claim}` | the source provides positive support for the claim |
+| `opposes` | Evidence \| Claim → Claim | `{evidence}` / `{claim}` | the source contradicts/weakens the claim |
+| `grounds` | Study → Evidence | `{study}` | the study produced / grounds the observation (inverse: `is_grounded_in`) |
+| `follows` | Study → Protocol | `{study}` | the study follows this protocol (the canvas labels this "uses") |
+| `request_target` | Request → Claim | `{request}` | the claim the requested work would illuminate |
+| `request_for` | Request → Study | `{request}` | the study the request asks to be done |
+
+The argument structure, end to end:
+
+```
+Question  ◄──addresses──  Claim  ◄──supports/opposes──  Evidence  ◄──grounds──  Study  ──follows──►  Protocol
+                            ▲                                                       ▲
+                            └──────────── Request ──request_target───────┘  (request_for ──►)
+```
+
+Evidence additionally carries (from the DG core, for provenance and literature use): `observationStatement` (→ Claim, what the observation asserts), `observationOriginActivity` (→ the Study/Activity at its origin), `observationBase` (→ the data Entity the observation rests on), and `sourceDocument` (→ a SourceDocument, for literature-derived Evidence). These are optional and discussed under [Data model](#data-model--schema-mapping).
+
+---
+
+## Syntax reference
+
+**General form.** Every MIRA directive takes the same shape:
 
 ```markdown
-:::{claim} claim-ppk2-expression
-:label: PPK2-based energy regeneration improves in vitro protein expression
+:::{<type>} <human-readable statement / title>
+:label: <optional-stable-id>
+:<relation>: <target-id>            # zero or more relation options
+:<field>: <value>                   # zero or more freeform fields
 
-This claim synthesizes our observations about the effect of PPK2 on 
-cell-free expression systems.
+Optional body — nested MyST Markdown (prose, lists, math, etc.).
 :::
 ```
 
-The argument after `{claim}` is an optional stable identifier. If omitted, references must match the `:label:` value.
+- **Argument** (after `{type}`) — the **human-readable statement** (the claim text, the question, …). Becomes the node `title`. Optional if `:title:` is given.
+- **`:label:`** — the **stable identifier** for cross-referencing (MyST-native). `:id:` is an accepted alias and takes precedence; `:name:` also aliases. Optional, but **recommended for any node referenced elsewhere or expected to be renamed**.
+- **Relation options** — `:supports:`, `:opposes:`, `:addresses:`, `:grounds:`, `:follows:`, `:request-target:`, `:request-for:`. Single value or a list: `:supports: [claim-a, claim-b]`.
+- **Body** — parsed as nested MyST.
+- **Freeform fields** (e.g. `:status:`, `:method:`, `:source:`, `:doi:`, `:url:`, `:tags:`, `:priority:`) — allowed and carried as metadata; encode something in a *typed* relation only when a tool must understand it (otherwise prose/freeform is fine).
 
-**Parameters:**
+### `{question}`
+
+```markdown
+:::{question} Is the TetR/TetO biosensor system functional in Nucleus Cytosol?
+:label: q-tetR-cytosol
+:::
+```
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| Argument (after `{claim}`) | No | Stable identifier for referencing |
-| `:label:` | Yes | Human-readable claim statement |
-| Content body | No | Optional extended description |
+| Argument | Yes* | The question, in human-readable form (*or supply `:title:`). |
+| `:label:` / `:id:` | No | Stable identifier. |
+| Body | No | Extended context. |
 
-### The `{evidence}` Directive
-
-Evidence nodes capture empirical observations—what you actually measured or observed. They should be grounded in figures, tables, or data.
-
-**Syntax:**
+### `{claim}`
 
 ```markdown
-:::{evidence} ev-ppk-egfp-50pct
-:label: PPK increases eGFP expression in Nucleus Cytosol by 50%
-:supports: claim-ppk2-expression
+:::{claim} The TetR sensor with a catecholase reporter is compatible with Nucleus Cytosol
+:label: claim-tetR-compatible
+:addresses: q-tetR-cytosol
 
-In this experiment, we observed a consistent 50% increase in eGFP 
-fluorescence intensity when PPK was added to the reaction mixture.
+Optional synthesis of why we believe this.
 :::
 ```
-
-**Supporting multiple claims:**
-
-```markdown
-:::{evidence} ev-ppk-dose-response
-:label: PPK shows dose-dependent effect on expression
-:supports: [claim-ppk2-expression, claim-dose-response]
-
-Expression levels correlated with PPK concentration across the 
-tested range (0.1-10 mM).
-:::
-```
-
-**Parameters:**
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| Argument | No | Stable identifier |
-| `:label:` | Yes | Concise description of the observation |
-| `:supports:` | No | Claim ID(s) or label(s) this evidence supports |
-| `:opposes:` | No | Claim ID(s) or label(s) this evidence contradicts |
-| Content body | No | Extended description or context |
+| Argument | Yes* | The claim statement. |
+| `:label:` / `:id:` | No | Stable identifier. |
+| `:addresses:` | No | Question id(s) this claim answers. |
+| `:supports:` / `:opposes:` | No | Claim id(s) this claim supports/opposes (claim-to-claim argument). |
+| Body | No | Extended description. |
 
-### Extending the `{figure}` Directive
-
-Figures ground evidence by providing visual or data-based support. We extend MyST's existing `{figure}` directive with discourse graph relations.
-
-**Syntax:**
+### `{evidence}`
 
 ```markdown
-:::{figure} ./figures/ppk-expression-barplot.png
-:label: fig-ppk-expression
-:grounds: ev-ppk-egfp-50pct
+:::{evidence} Sensor converts catechol to a yellow product above visual threshold only with 10 µM aTc
+:label: ev-atc-derepression
+:supports: claim-tetR-compatible
+:data: ./experiments/pT7_TetO_catecholase.csv      # pointer to the underlying data (observationBase)
 
-Barplot showing eGFP fluorescence intensity with and without PPK 
-treatment. Error bars indicate standard deviation (n=3).
+What was observed, with enough context to read it cold.
 :::
 ```
-
-**Grounding multiple evidence nodes:**
-
-```markdown
-:::{figure} ./figures/dose-response-curve.png
-:label: fig-dose-response
-:grounds: [ev-ppk-egfp-50pct, ev-ppk-dose-response]
-
-Dose-response curve showing eGFP expression as a function of PPK 
-concentration.
-:::
-```
-
-**Referencing Jupyter notebook cell outputs:**
-
-When your figure is generated by a code cell, reference it using the `#` prefix:
-
-```markdown
-:::{figure} #fig-my-cool-result
-:label: fig-expression-analysis
-:grounds: ev-ppk-egfp-50pct
-
-Expression analysis generated from raw fluorescence data.
-:::
-```
-
-The corresponding notebook cell should have a label comment:
-
-```python
-#| label: fig-my-cool-result
-
-import matplotlib.pyplot as plt
-my_dataset = load_data('path/to/data.csv')
-processed_data = process_my_data(my_dataset)
-fig = plt.plot(processed_data)
-plt.show()
-```
-
-**Parameters:**
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| Argument | Yes | Path to image file or `#cell-label` reference |
-| `:label:` | Yes | Figure identifier for cross-referencing |
-| `:grounds:` | No | Evidence ID(s) or label(s) this figure supports |
-| Content body | Yes | Figure caption |
+| Argument | Yes* | The observation statement. |
+| `:label:` / `:id:` | No | Stable identifier. |
+| `:supports:` / `:opposes:` | No | Claim id(s) this evidence supports/opposes. |
+| `:data:` | No | **Pointer** to the underlying data artifact (the `observationBase`) — a path, S3/HTTP URI, or repo+commit+path. Never the data itself. |
+| `:source:` | No | For literature-derived evidence: a citation / DOI / `SourceDocument` id. |
+| Body | No | Extended description / context. |
 
----
-
-## Inline References with Roles
-
-For referencing discourse nodes within prose, use inline role syntax:
-
-**Referencing a claim:**
+### `{study}`
 
 ```markdown
-Our results provide strong support for {claim}`claim-ppk2-expression`, 
-particularly under low-salt conditions.
+:::{study} aTc dose-response in standard Nucleus Cytosol
+:label: study-atc-platereader
+:grounds: ev-atc-derepression
+:follows: protocol-platereader-a385
+
+10 µl reactions, 1 mM catechol, 20 nM sensor DNA, 37 °C in a plate reader.
+:::
 ```
 
-**Referencing evidence:**
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| Argument | Yes* | Short name of the experiment/activity. |
+| `:label:` / `:id:` | No | Stable identifier. |
+| `:grounds:` | No | Evidence id(s) this study produced/grounds. |
+| `:follows:` | No | Protocol id(s) this study follows. |
+| Body | No | Experimental detail (or a pointer to it). |
+
+### `{protocol}`
 
 ```markdown
-As shown in {evidence}`ev-ppk-egfp-50pct`, the effect was consistent 
-across replicates.
+:::{protocol} Plate-reader absorbance assay (A385)
+:label: protocol-platereader-a385
+
+Measure A385 over time; visual threshold A385 = 1.0. (Link or embed the full protocol.)
+:::
 ```
 
-Roles resolve references by searching for matching IDs first, then falling back to label matching.
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| Argument | Yes* | Protocol name. |
+| `:label:` / `:id:` | No | Stable identifier. |
+| Body | No | The method, or a pointer to it. |
+
+### `{request}`
+
+```markdown
+:::{request} Encapsulate the sensor and test whether 10 µM aTc is sufficient for derepression
+:label: req-encapsulation
+:request-target: claim-tetR-compatible
+:motivation: Determine whether DNA template should be tuned to control leak.
+:skill: cell-free encapsulation
+
+Optional detail.
+:::
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| Argument | Yes* | What is being requested (an experiment/analysis that does not exist yet). |
+| `:label:` / `:id:` | No | Stable identifier. |
+| `:request-target:` | No | Claim id(s) the requested work would illuminate (→ `request_target`). |
+| `:request-for:` | No | Study id the request asks to be done (→ `request_for`). |
+| `:motivation:`, `:skill:` | No | Why it's needed; skill required to claim it. |
+| Body | No | Extended description. |
 
 ---
 
-## Complete Example
+## Inline references with roles
 
-Here's a full DevNote demonstrating the syntax:
+For referencing discourse nodes within prose, use inline role syntax with the node's id (or its statement):
+
+```markdown
+This preliminary test {claim}`claim-tetR-compatible` is backed by
+{evidence}`ev-atc-derepression`, produced in {study}`study-atc-platereader`.
+```
+
+Roles are available for every node type: `{question}`, `{claim}`, `{evidence}`, `{study}`, `{protocol}`, `{request}`. (MyST's native `{ref}` / `[](#label)` cross-references also resolve to a node by its `:label:`.)
+
+---
+
+## Complete example
+
+A full developer note exercising all six node types:
 
 ```markdown
 ---
-title: "DevNote: PPK2 Energy Regeneration Effects"
+title: "DevNote: TetO-catecholase sensor in Nucleus Cytosol"
 authors:
-  - name: Jane Researcher
-date: 2025-01-15
+  - name: Maram Naji
+date: 2026-05-08
 ---
 
-# PPK2 Energy Regeneration in Cell-Free Systems
+# Overview
 
-## Claims
-
-:::{claim} claim-ppk2-improves-expression
-:label: PPK2-based energy regeneration improves in vitro protein expression
-
-Adding PPK2 to cell-free expression reactions provides a sustained 
-energy source that increases overall protein yield.
+:::{question} Is the TetR/TetO biosensor system functional in Nucleus Cytosol?
+:label: q-tetR-cytosol
 :::
 
-:::{claim} claim-dose-dependent
-:label: The PPK2 effect is dose-dependent within the tested range
-
-Expression improvements scale with PPK2 concentration between 0.1-10 mM.
+:::{claim} The TetR sensor with a catecholase reporter is compatible with Nucleus Cytosol
+:label: claim-tetR-compatible
+:addresses: q-tetR-cytosol
 :::
 
-## Evidence
+# Results
 
-:::{evidence} ev-egfp-50pct-increase
-:label: PPK increases eGFP expression in Nucleus Cytosol by 50%
-:supports: claim-ppk2-improves-expression
-
-Fluorescence measurements show consistent 50% increase in eGFP signal 
-when 5 mM PPK is added to reactions.
+:::{evidence} Sensor converts catechol to a yellow product above visual threshold only with 10 µM aTc
+:label: ev-atc-derepression
+:supports: claim-tetR-compatible
+:data: ./experiments/pT7_TetO_catecholase.csv
 :::
 
-:::{evidence} ev-dose-response
-:label: Expression scales linearly with PPK concentration
-:supports: [claim-ppk2-improves-expression, claim-dose-dependent]
-
-Dose-response experiments (0.1, 1, 5, 10 mM PPK) show linear relationship 
-between PPK concentration and expression level (R² = 0.94).
+:::{study} aTc dose-response in standard Nucleus Cytosol
+:label: study-atc-platereader
+:grounds: ev-atc-derepression
+:follows: protocol-platereader-a385
 :::
 
-## Figures
+:::{protocol} Plate-reader absorbance assay (A385)
+:label: protocol-platereader-a385
 
-:::{figure} #fig-expression-barplot
-:label: fig-ppk-barplot
-:grounds: ev-egfp-50pct-increase
-
-Comparison of eGFP expression with and without PPK treatment.
+A385 over time; visual threshold A385 = 1.0; 10 µl reactions at 37 °C.
 :::
 
-:::{figure} ./figures/dose-response.png
-:label: fig-dose-response
-:grounds: ev-dose-response
+# Conclusion and next steps
 
-Dose-response curve for PPK concentration vs. expression level.
+This preliminary result {claim}`claim-tetR-compatible` is supported by
+{evidence}`ev-atc-derepression`.
+
+:::{request} Encapsulate the sensor and test whether 10 µM aTc is sufficient for derepression
+:label: req-encapsulation
+:request-target: claim-tetR-compatible
+:motivation: Determine whether the DNA template should be tuned to control leak.
 :::
-
-## Discussion
-
-Our experiments provide {evidence}`ev-egfp-50pct-increase` supporting 
-the hypothesis that {claim}`claim-ppk2-improves-expression`. The 
-{evidence}`ev-dose-response` further suggests this is not a threshold 
-effect but scales with concentration.
 ```
 
 ---
 
-## Reference Resolution
+## Reference resolution
 
-When a relation (`:supports:`, `:grounds:`, etc.) specifies a target, the resolver follows this order:
+When a relation option names a target, the resolver follows this order:
 
-1. **Exact ID match**: If the value matches a node's argument ID exactly
-2. **Label match**: If the value matches a node's `:label:` value exactly
-3. **Partial label match**: If the value is a unique substring of a label (with warning)
-4. **Error**: If no match or ambiguous matches found
+1. **Exact ID match** — the value matches a node's `:label:`/`:id:`.
+2. **Exact statement match** — the value matches a node's argument/title text exactly.
+3. **Unique partial match** — the value is a unique substring of a statement (emit a **warning**).
+4. **Error** — no match, or ambiguous matches.
 
-**Recommendation:** Use stable IDs for any node that will be referenced across documents or that you expect to rename.
+Resolution warnings/errors should be emitted on the MyST `vfile` (a build warning), and **must not** crash the build or drop the authored prose. **Recommendation:** give any node referenced across documents — or that you may rename — an explicit `:label:`/`:id:`.
 
 ---
 
-## AST Representation
+## Data model & schema mapping
 
-For implementers: discourse graph directives produce the following AST node structures.
+The directives map 1:1 onto the canonical MIRA LinkML schema ([`MIRA-science/schema`](https://github.com/MIRA-science/schema): `mira.yaml`, which imports `discoursegraphs.yaml` / `dg_core`). The **interchange format is JSON-LD/RDF** via the published context (`mira.context.jsonld`).
 
-**Claim node:**
+| Directive | Class | Key slots (this spec) |
+|-----------|-------|-----------------------|
+| `{question}` | `mira:Question` (`dg:Question`) | — |
+| `{claim}` | `mira:Claim` (`dg:Claim`, an `Argument`) | `addresses`, `supports`, `opposes` |
+| `{evidence}` | `mira:Evidence` (`dg:Evidence`, an `Argument`, a `prov:Entity`) | `supports`, `opposes`, `observationBase` (`:data:`), `observationOriginActivity`, `sourceDocument` (`:source:`) |
+| `{study}` | `mira:Study` (`prov:Activity`) | `grounds` (inverse `is_grounded_in`), `follows` |
+| `{protocol}` | `mira:Protocol` (`prov:Activity`) | — |
+| `{request}` | `mira:Request` | `request_target`, `request_for` |
+
+**Layering (connect, don't absorb).** Provenance of *how data was produced* (Study/Protocol as `prov:Activity`; finer pipeline lineage via PROV-O, Snakemake/Nextflow) and domain ontologies (e.g. SBOL for synthetic-biology constructs) live in **adjacent/lower layers the graph points to**, not inside the discourse layer. Discourse graphs answer *what question / what claim / what evidence*; PROV-O answers *what software/protocol produced this artifact*. Per **pointers-not-payloads**, data/code/media are referenced by URI, never embedded.
+
+---
+
+## AST representation
+
+The reference parser ([`myst-plus-mira`](https://github.com/MIRA-science/myst-plus-mira)) emits, for each directive, an mdast-compatible node:
 
 ```json
 {
   "type": "claim",
-  "id": "claim-ppk2-expression",
-  "label": "PPK2-based energy regeneration improves in vitro protein expression",
-  "children": [
-    { "type": "paragraph", "children": [...] }
-  ]
+  "kind": "mira",
+  "directive": "claim",
+  "title": "The TetR sensor with a catecholase reporter is compatible with Nucleus Cytosol",
+  "identifier": "claim-tetR-compatible",
+  "label": "claim-tetR-compatible",
+  "options": {
+    "label": "claim-tetR-compatible",
+    "addresses": "q-tetR-cytosol"
+  },
+  "children": [ { "type": "paragraph", "children": [] } ]
 }
 ```
 
-**Evidence node:**
+- `title` ← the directive argument (or `:title:`).
+- `identifier` / `label` ← `:id:` ?? `:label:` ?? `:name:`.
+- `options` ← all named options **as authored**, including relation options.
+- `children` ← the parsed body (nested MyST).
+
+**Edges are not yet resolved.** Today relation options live as raw strings in `options`. The next implementation step (see [Future Work](#future-work)) is a **resolution pass** that turns those into typed edges — e.g. a normalized `relations` array on each node, or a separate edge list:
 
 ```json
-{
-  "type": "evidence",
-  "id": "ev-ppk-egfp-50pct",
-  "label": "PPK increases eGFP expression in Nucleus Cytosol by 50%",
-  "relations": [
-    { "type": "supports", "target": "claim-ppk2-expression" }
-  ],
-  "children": [
-    { "type": "paragraph", "children": [...] }
-  ]
-}
+{ "source": "ev-atc-derepression", "type": "supports", "target": "claim-tetR-compatible" }
 ```
 
-**Figure node (extended):**
-
-```json
-{
-  "type": "figure",
-  "id": "fig-ppk-barplot",
-  "src": "#fig-expression-barplot",
-  "relations": [
-    { "type": "grounds", "target": "ev-egfp-50pct-increase" }
-  ],
-  "children": [
-    { "type": "caption", "children": [...] }
-  ]
-}
-```
+This resolved graph is what the visualizer renders and the transporter serializes to JSON-LD.
 
 ---
 
-## Known Limitations (Phase 1)
+## Known limitations (this version)
 
-The following features are explicitly **out of scope** for Phase 1:
+Out of scope for v2; revisit with user feedback:
 
-1. **Custom node types**: Only `claim` and `evidence` are supported
-2. **Custom relation types**: Only `supports`, `opposes`, `informs`, and `grounds`
-3. **Relation attributes**: No confidence levels, provenance, or other metadata on relations
-4. **Namespace prefixes**: No CURIE-style extensibility (e.g., `dg:claim`)
-5. **Bidirectional relation syntax**: Relations are declared on the source node only
-6. **Cross-document resolution**: References within a single document/project only
-
-These limitations are intentional to reduce complexity and encourage adoption. Phase 2 will address extensibility based on user feedback.
+1. **Relation attributes** — no confidence, weight, or provenance on edges yet (just source/target/type).
+2. **Namespace prefixes / CURIEs** — no `dg:claim` / `biolab:construct` extensibility; the six node types are fixed.
+3. **Reified relation nodes** — relations are declared on the source node, not as first-class `{relation}` nodes.
+4. **Bidirectional declaration** — declare each edge once, on its source; inverses (`supportedBy`, `is_grounded_in`, …) are derived, not authored.
+5. **Cross-document resolution** — references resolve within a single document/project.
 
 ---
 
-## Open Questions for Implementation
+## Future Work
 
-### Jupyter Cell Linkage
+The following are deliberately **not** in this version. They are the most likely next increments.
 
-When a figure references a notebook cell output (`#fig-my-cool-result`), the cell consumes a dataset and produces a figure. Should this provenance chain be explicit in the AST?
+### Extended `{figure}` directive (and figure/data grounding)
 
-**Current behavior:** The cell label links figure to code; data provenance is implicit in the code itself.
+v1 proposed extending MyST's `{figure}` with discourse relations so a figure could `:grounds:` an Evidence node. We defer it because of a **semantic mismatch with the schema** that must be resolved first: in the MIRA schema, `grounds` is **`Study → Evidence`**, and a figure/dataset is the Evidence's **`observationBase`** (a `prov:Entity`), *not* a grounding activity. A future `{figure}` extension should therefore either (a) attach the figure/data as the Evidence's `observationBase` pointer, and/or (b) mint a `Study` for the producing code cell — not introduce a `Figure → Evidence` `grounds` edge that contradicts the schema. Related, deferred pieces:
 
-**Possible enhancement:** A `:data-source:` option on cells or figures that explicitly names the input dataset, enabling queries like "show all claims grounded in figures derived from dataset X."
+- **Jupyter cell provenance.** A figure generated by a labeled notebook cell (`#fig-cell-label`) implies a chain `dataset → code cell → figure → evidence → claim`. Decide how much of this is explicit in the AST (e.g. a `:data-source:` option) vs. left implicit in the code.
+- **Reconciling existing notes.** Developer notes today (e.g. the `myst-plus-mira` test-data) use `:::{figure} … :grounds: <evidence>`; a migration path is needed.
 
-We defer this to Phase 2 pending user feedback on whether implicit linkage is sufficient.
+### Relations present in the DG grammar but not yet in the LinkML schema
 
-### Rendering
+- **`informs`** (Evidence/Result/Claim → Question/Hypothesis), **`reproduces`** (Evidence → Evidence), **`resolves`** (Result → Issue). These appear in the Discourse Graphs node grammar but are **not yet slots in `mira.yaml`/`dg_core`**. Add them to the schema first, then expose as directive options.
+- **Hypothesis** as a distinct node type (the DG grammar separates Hypothesis from Claim; MIRA currently folds the answering assertion into `Claim`).
 
-How should discourse nodes render in different output formats?
+### `SourceDocument` and literature-derived evidence
 
-| Format | Proposed Rendering |
-|--------|-------------------|
-| HTML | Colored boxes with expandable relation links |
-| PDF | Numbered statements with cross-references |
-| JATS | `<statement>` elements with custom attributes |
+Promote `:source:` into a first-class `{source}` directive (`dg:SourceDocument`) so literature-derived Evidence can `sourceDocument`-link to a citable work (`describesActivity` → the Study it reports).
 
-Renderer implementation details are out of scope for this syntax specification.
+### Extensibility (the original "Phase 2")
+
+- A generic `{discourse} prefix:type` directive with **namespace/CURIE** support and frontmatter prefix declarations.
+- **Reified `{relation}` nodes** carrying attributes (`:confidence:`, `:provenance:`).
+- Custom domain node types (e.g. `biolab:construct` with a sequence pointer).
+
+### Cross-document identity & export
+
+- **Persistent, resolvable IDs across documents** via **OXA** (Curvenote's Open eXchange Architecture). Design `:label:`/`:id:` to be OXA-upgradable.
+- **Edge-resolution pass + validation + autocomplete** (resolve relation options to typed edges; warn on dangling references; autocomplete ids when typing `:supports:`).
+- **`myst export --format=discourse-graph document.md > graph.jsonld`** — emit the resolved subgraph as JSON-LD/RDF for transport into another lab's graph.
+
+### Authoring ergonomics
+
+- **Study-as-container.** Allow a `{study}` block to *contain* its `{protocol}` and `{evidence}` blocks, with the `grounds`/`follows` edges inferred from nesting (an alternative to declaring them by reference).
+- **Rendering.** Per-format rendering of discourse nodes (HTML colored boxes with expandable relation links; PDF numbered statements; JATS `<statement>` elements) — out of scope for this *syntax* spec.
 
 ---
 
 ## Development notes
 
-Ongoing development notes can be found at this Roam Research page: [Project/DG in MyST markdown](https://roamresearch.com/#/app/discourse-graphs/page/AJu-6cwmT). Please get in touch by email if you'd like to contribute via github or this page.  
+Ongoing development notes: [Project/DG in MyST markdown](https://roamresearch.com/#/app/discourse-graphs/page/AJu-6cwmT) (Discourse Graphs team Roam). Reference parser: [`MIRA-science/myst-plus-mira`](https://github.com/MIRA-science/myst-plus-mira). Please get in touch by email if you'd like to contribute via GitHub or this page.
 
-## Appendix: Relation Semantics
+## Appendix: relation semantics
 
 | Relation | Source → Target | Semantics |
 |----------|-----------------|-----------|
-| `supports` | Evidence → Claim | The evidence provides positive support for the claim |
-| `supports` | Claim → Claim | The first claim, if true, supports the second |
-| `opposes` | Evidence → Claim | The evidence contradicts or weakens the claim |
-| `opposes` | Claim → Claim | The claims are in tension |
-| `informs` | Evidence → Claim | The evidence provides relevant context |
-| `grounds` | Figure → Evidence | The figure provides visual/data support for the observation |
+| `addresses` | Claim → Question | the claim proposes to answer the question |
+| `supports` | Evidence → Claim | the evidence provides positive support for the claim |
+| `supports` | Claim → Claim | the first claim, if true, supports the second |
+| `opposes` | Evidence → Claim | the evidence contradicts or weakens the claim |
+| `opposes` | Claim → Claim | the claims are in tension |
+| `grounds` | Study → Evidence | the study produced / grounds the observation (inverse: `is_grounded_in`) |
+| `follows` | Study → Protocol | the study follows (uses) the protocol |
+| `request_target` | Request → Claim | the claim the requested work would illuminate |
+| `request_for` | Request → Study | the study the request asks to be done |
 
 ---
 
 ## Changelog
 
-- **v1.0-draft (2025-12-17)**: Initial Phase 1 specification
+- **v2.0-draft (2026-06-09):** Revised to the full MIRA node grammar (`Question`, `Claim`, `Evidence`, `Study`, `Protocol`, `Request`) and the schema's real edges; aligned to the `myst-plus-mira` reference parser (argument = human statement, `:label:`/`:id:` = stable identifier — inverse of v1). Moved the extended `{figure}` directive, `informs`/`reproduces`/`resolves`, `SourceDocument`, namespaces/reified relations, cross-document OXA ids, and JSON-LD export tooling to **Future Work**.
+- **v1.0-draft (2025-12-17):** Initial Phase-1 specification — minimal `{claim}`/`{evidence}` + extended `{figure}`.
