@@ -1,0 +1,54 @@
+version: 1
+project:
+  license: CC-BY-4.0
+  open_access: true
+  venue: Nucleus
+  subject: Developer Note
+  github: https://github.com/bnext-bio/nucleus-developer-notes
+  references:
+    devnotes: https://devnotes.bnext.bio
+  abbreviations:
+    MyST: Markedly Structured Text
+    CDK: cell development kit
+  keywords:
+    - TetR
+    - catecholase
+    - colorimetric
+  plugins:
+    - lorem.mjs
+  # jupyter: true
+  exports:
+    - format: meca
+    - format: typst
+      template: https://github.com/curvenote-templates/bnext.git
+      article: main.md
+      output: devnote.pdf
+      id: article
+  requirements:
+    - environment.yml
+  resources:
+    - src/**/*
+    - figures/**/*
+    - figures/**/*
+    - general/**/*
+    - General/**/*
+    - experiments/**/*
+    - Experiments/**/*
+    - resources/**/*
+    - Resources/**/*
+    - plasmids/**/*
+    - Plasmids/**/*
+  downloads:
+    - id: article
+      title: Download Article PDF
+  #
+  # Are there standard reference sources that should be made available to the
+  # author within the template to make citing easy? if so add a .bib file and
+  # list it here.
+  #
+  # bibliography:
+  #   - references.bib
+  #   - https://devnotes.bnext.bio/references.bib
+site:
+  template: article-theme
+  nav: []
