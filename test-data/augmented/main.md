@@ -9,26 +9,9 @@ The TetR protein binds to the Tet operator in DNA to repress transcription of th
 
 In this work, the Tet operator has been encoded upstream of a catecholase reporter (C23DO). The resulting biosensor is then added to a Nucleus Cytosol reaction supplemented with catechol, which is converted from a colorless substrate to a yellow product by catecholase. In this preliminary work, a homemade stock of TetR in glycerol was used. Glycerol may cause reaction poisoning in Nucleus Cytosol and is not an optimal storage buffer for TetR.
 
-:::{question} q-tetR-cytosol-compatibility
-:label: Is the TetR/TetO biosensor system functional in Nucleus Cytosol?
-:::
-
-:::{claim} claim-1
-:label: This preliminary test shows that the TetR sensor with a LacZ reporter is compatible with Nucleus Cytosol.
-:addresses: q-tetR-cytosol-compatibility
-:::
-
-
-
-# Results 
+# Results
 
 Comparing the absorbance at 385 nm over time demonstrates that the sensor is able to convert catechol from colorless to yellow faster to visual levels only in the presence of 10 µM anhydrotetracycline in standard Nucleus Cytosol conditions with 20 nM of sensor DNA. Prior visual calibrations determined the visual threshold to be an abosrbance level of 1.0. For each condition, a 10 µl reaction was assembled with 1 mM catechol and incubated at 37 °C in a platereader. 
-
-:::{evidence} ev-atc-derepression-kinetics
-:label: Sensor converts catechol to yellow product above visual threshold only in the presence of 10 µM aTc
-:supports: claim-1
-:method: plate-reader absorbance at 385 nm; 10 µl reactions at 37 °C; visual threshold A385 = 1.0
-:::
 
 :::{table} Experiment conditions
 :name: reactions
@@ -39,6 +22,8 @@ Comparing the absorbance at 385 nm over time demonstrates that the sensor is abl
 | Regulated  | Sensor reaction with TetR |
 | Derepressed  | Sensor reaction with TetR and aTc |
 :::
+
+
 
 :::{table} Reaction composition
 :label: reaction-composition
@@ -60,34 +45,16 @@ Comparing the absorbance at 385 nm over time demonstrates that the sensor is abl
 :::
 
 :::{figure} ./experiments/pT7_TetO_catecholase.png
-:label: fig-tetO-catecholase
+:label: fig:tetO_catecholase
 :width: 75%
-:grounds: ev-atc-derepression-kinetics
 
-Kinetics for colorimetric conversion of catechol into a yellow product.
-:::
-
-# Experiment
-
-
-
-:::{figure} ./experiments/pT7_TetO_catecholase.png
-:label: fig-tetO-catecholase
-:width: 75%
-:grounds: ev-atc-derepression-kinetics
-
-Kinetics for colorimetric conversion of catechol into a yellow product.
+Kinetics for colorimetric conversion of catechol into a yellow product {ref}`ev-atc-derepression-kinetics`.
 :::
 
 
 # Conclusion and Future Steps
 
-
-This preliminary test shows that the TetR sensor with a LacZ reporter is compatible with Nucleus Cytosol {ref}`claim-1`. Encapsulation of the sensor will inform whether 10 µM aTc is sufficient for derepression and whether DNA template should be tuned to control leak.
-
-:::{request}
-Encapsulation of the sensor will inform whether 10 µM aTc is sufficient for derepression and whether DNA template should be tuned to control leak.
-:::
+This preliminary test shows that the TetR sensor with a LacZ reporter is compatible with Nucleus Cytosol {ref}`claim-1`. Encapsulation of the sensor will inform whether 10 µM aTc is sufficient for derepression and whether DNA template should be tuned to control leak {ref}`request-1`.
 
 # Bill of Materials
 
@@ -101,3 +68,47 @@ Encapsulation of the sensor will inform whether 10 µM aTc is sufficient for der
 | Anhydrotetracycline | Anhydrotetracycline, VETRANAL analytical standard| Sigma-Aldrich | 37919 | $275 | -20C in water at 5 mM | https://www.sigmaaldrich.com/US/en/product/sial/37919?srsltid=AfmBOor-kWLQUYIchxiC-ZxD--uDKjnDc-uSqG_UDo6Q_e35uec-Qnid |
 
 *Homemade TetR used as a temporary solution, though this preparation stored in glycerol is not ideal given glycerol poisoning effects against the Cytosol reaction
+
++++ { "part": "MIRA" }
+
+:::{question} Is the TetR/TetO biosensor system functional in Nucleus Cytosol? 
+:label: question-1
+:::
+
+:::{claim} TetR/TetO biosensor system **is** functional in Nucleus Cytosol.
+:label: claim-1
+:addresses: q-tetR-cytosol-compatibility
+:::
+
+
+::::{evidence}  Sensor converts catechol to yellow product above visual threshold only in the presence of 10 µM aTc
+:label: ev-atc-derepression-kinetics
+
+:supports: claim-1
+:derived-from: study-1
+
+:::{figure} ./experiments/pT7_TetO_catecholase.png
+:label: fig-tetO-catecholase
+:width: 75%
+:grounds: ev-atc-derepression-kinetics
+
+Kinetics for colorimetric conversion of catechol into a yellow product.
+:::
+::::
+
+
+:::{request}
+:label: request-1
+Encapsulation of the sensor will inform whether 10 µM aTc is sufficient for derepression and whether DNA template should be tuned to control leak.
+:::
+
+
+:::{study} Test TetR/TetO biosensor system
+:label: study-1
+:follows-protocol: protocol-1
+    :modified-by: TODO
+:follow-protocol: protocol-2
+:produces: ev-atc-derepression-kinetics
+:::
+
++++
