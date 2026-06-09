@@ -1,0 +1,26 @@
+version: 1
+extends: base.yml
+project:
+  title: 'TetO-Catecholase sensor validation in Nucleus Cytosol'
+  authors:
+    - name: Maram Naji
+      email: maram@U.northwestern.edu
+      orcid: 0000-0003-1409-4194
+      affiliations:
+        - name: Northwestern University
+          city: Evanston
+          state: Illinois
+          postal_code: 60201
+          country: USA
+      corresponding: true
+  date: 2026-05-08
+  banner: banner.webp
+  # thumbnail: general/schematic-FA_metabolism.png
+  toc:
+    - file: main.md
+  downloads:
+    # - file: experiments/experiment-01/MTHFS-labnotebook.pdf
+    #   title: Lab Notebook Entry
+    - file: experiments/sequences/pMN067_T7_TetO_C23DO_entireconstruct.dna
+      title: pMN067-T7-TetO-C23DO
+  id: 019db237-0d03-7ae1-8c40-e57e2ce1bea1
