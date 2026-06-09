@@ -1,0 +1,39 @@
+{
+  "name": "myst-plus-mira",
+  "version": "0.1.0",
+  "description": "Parse MyST Markdown with MIRA-specific directives.",
+  "license": "BSD-3-Clause",
+  "type": "module",
+  "bin": {
+    "myst-plus-mira": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "myst-common": "^1.9.4",
+    "myst-parser": "^1.6.4",
+    "unified": "^10.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
