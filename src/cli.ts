@@ -40,7 +40,9 @@ async function main(argv: string[]): Promise<void> {
   const tree = parseMystMarkdown(markdown);
   const result = directivesOnly ? findMiraDirectives(tree) : tree;
 
-  stdout.write(`${JSON.stringify(result, null, compact ? 0 : 2)}\n`);
+  const replacer = (key: string, value: unknown) =>
+    key === "position" ? undefined : value;
+  stdout.write(`${JSON.stringify(result, replacer, compact ? 0 : 2)}\n`);
 }
 
 main(process.argv.slice(2)).catch((error: unknown) => {
