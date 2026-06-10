@@ -2,12 +2,15 @@
 
 Parse MyST Markdown with MIRA-specific directives:
 
-- `question`
-- `claim`
-- `evidence`
-- `study`
-- `request`
-- `protocol`
+| Directive          | Relations                                               |
+|--------------------|---------------------------------------------------------|
+| `question`         | —                                                       |
+| `claim`            | `:addresses:` (question ids)                            |
+| `evidence`         | `:supports:` (claim ids), `:derived-from:` (study ids)  |
+| `study`            | `:produces:` (evidence ids)                             |
+| `protocol`         | —                                                       |
+| `follows-protocol` | `:modified-by:` (protocol modification ids)             |
+| `request`          | —                                                       |
 
 The package is TypeScript-first and builds on `unified`, mdast, remark-compatible
 pipelines, and the JavaScript `myst-parser` package.
@@ -22,12 +25,31 @@ npm run build
 ## Use as a library
 
 ```ts
-import { findMiraDirectives, parseMystMarkdown } from 'myst-plus-mira';
+import { findMiraDirectives, parseMystMarkdown } from "myst-plus-mira";
 
-const tree = parseMystMarkdown(`:::{claim} Treatment reduces risk
+const tree = parseMystMarkdown(`
+:::{question} Does treatment X reduce cardiovascular risk?
+:label: q-risk
+:::
+
+:::{claim} Treatment X reduces risk
 :label: claim-risk
+:addresses: q-risk
 
-The claim body can contain **nested MyST**.
+Treatment X significantly reduces cardiovascular risk in the target population.
+:::
+
+:::{evidence} RCT results support the claim
+:label: evidence-rct
+:supports: claim-risk
+:derived-from: study-rct
+
+The RCT showed a 30% reduction in events (p < 0.01).
+:::
+
+:::{study} RCT of Treatment X
+:label: study-rct
+:produces: evidence-rct
 :::
 `);
 
@@ -35,18 +57,22 @@ const miraNodes = findMiraDirectives(tree);
 ```
 
 Each directive becomes an mdast-compatible node whose `type` is the directive
-name. The directive body is parsed as nested MyST content.
+name. The directive argument is the human-readable statement/title; `:label:` is
+the optional stable identifier for cross-references. Relation options are parsed
+into typed arrays on the node.
 
 ```json
 {
   "type": "claim",
   "kind": "mira",
   "directive": "claim",
-  "title": "Treatment reduces risk",
+  "title": "Treatment X reduces risk",
   "identifier": "claim-risk",
   "label": "claim-risk",
+  "addresses": ["q-risk"],
   "options": {
-    "label": "claim-risk"
+    "label": "claim-risk",
+    "addresses": "q-risk"
   },
   "children": []
 }

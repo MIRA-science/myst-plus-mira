@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { readFile } from 'node:fs/promises';
-import { stdin, stdout, stderr } from 'node:process';
-import { findMiraDirectives, parseMystMarkdown } from './index.js';
+import { readFile } from "node:fs/promises";
+import { stdin, stdout, stderr } from "node:process";
+import { findMiraDirectives, parseMystMarkdown } from "./index.js";
 
 const help = `Usage: myst-plus-mira [options] [file]
 
@@ -16,9 +16,9 @@ Reads from stdin when file is omitted or "-".
 `;
 
 async function readStdin(): Promise<string> {
-  stdin.setEncoding('utf8');
+  stdin.setEncoding("utf8");
 
-  let input = '';
+  let input = "";
   for await (const chunk of stdin) {
     input += chunk;
   }
@@ -27,15 +27,16 @@ async function readStdin(): Promise<string> {
 }
 
 async function main(argv: string[]): Promise<void> {
-  if (argv.includes('--help')) {
+  if (argv.includes("--help")) {
     stdout.write(help);
     return;
   }
 
-  const compact = argv.includes('--compact');
-  const directivesOnly = argv.includes('--directives-only');
-  const file = argv.find((arg) => !arg.startsWith('-'));
-  const markdown = file && file !== '-' ? await readFile(file, 'utf8') : await readStdin();
+  const compact = argv.includes("--compact");
+  const directivesOnly = argv.includes("--directives-only");
+  const file = argv.find((arg) => !arg.startsWith("-"));
+  const markdown =
+    file && file !== "-" ? await readFile(file, "utf8") : await readStdin();
   const tree = parseMystMarkdown(markdown);
   const result = directivesOnly ? findMiraDirectives(tree) : tree;
 
