@@ -103,12 +103,17 @@ Encapsulation of the sensor will inform whether 10 µM aTc is sufficient for der
 :::
 
 
-:::{study} Test TetR/TetO biosensor system
+::::{study} Test TetR/TetO biosensor system
 :label: study-1
-:follows-protocol: protocol-1
-    :modified-by: TODO
-:follow-protocol: protocol-2
-:produces: ev-atc-derepression-kinetics
+
+:::{follows-protocol} protocol-1
+  :modified-by: TODO
 :::
+
+:::{follows-protocol} protocol-2
+:::
+
+:produces: ev-atc-derepression-kinetics
+::::
 
 +++

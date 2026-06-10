@@ -1,4 +1,5 @@
 node_modules/
 dist/
 coverage/
+src/__snapshots__/
 .DS_Store

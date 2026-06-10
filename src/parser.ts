@@ -1,7 +1,8 @@
 import { mystParser, mystParse } from 'myst-parser';
 import { unified } from 'unified';
 import type { DirectiveSpec, GenericNode, GenericParent } from 'myst-common';
-import { isMiraDirectiveNode, miraDirectives, type MiraDirectiveNode } from './directives.js';
+import { isMiraDirectiveNode, miraDirectives } from './directives.js';
+import { type MiraDirectiveNode } from './directives.types.js';
 
 export type MystParserOptions = NonNullable<Parameters<typeof mystParse>[1]>;
 

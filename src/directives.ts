@@ -1,28 +1,6 @@
-import type { DirectiveData, DirectiveSpec, GenericNode, GenericParent } from 'myst-common';
-
-export const miraDirectiveNames = [
-  'question',
-  'claim',
-  'evidence',
-  'study',
-  'request',
-  'protocol',
-] as const;
-
-export type MiraDirectiveName = (typeof miraDirectiveNames)[number];
-
-export type MiraOptionValue = string | number | boolean | GenericNode[];
-
-export interface MiraDirectiveNode extends Omit<GenericParent, 'type' | 'kind' | 'children'> {
-  type: MiraDirectiveName;
-  kind: 'mira';
-  directive: MiraDirectiveName;
-  title?: string;
-  identifier?: string;
-  label?: string;
-  options: Record<string, MiraOptionValue>;
-  children: GenericNode[];
-}
+import { DirectiveData, DirectiveSpec }  from 'myst-common';
+import type { GenericNode } from 'myst-common';
+import {  miraDirectiveNames, type MiraDirectiveName, type MiraDirectiveNode, type MiraOptionValue } from './directives.types.js';
 
 const commonOptionDefinitions: NonNullable<DirectiveSpec['options']> = {
   id: {
@@ -41,35 +19,29 @@ const commonOptionDefinitions: NonNullable<DirectiveSpec['options']> = {
     type: String,
     doc: 'Display title. Overrides the directive argument when present.',
   },
-  status: {
-    type: String,
-    doc: 'Workflow status for this item.',
-  },
-  tags: {
-    type: String,
-    doc: 'Comma-separated tags.',
-  },
-  ref: {
-    type: String,
-    doc: 'External or internal reference.',
-  },
-  doi: {
-    type: String,
-    doc: 'DOI reference.',
-  },
-  url: {
-    type: String,
-    doc: 'Source URL.',
-  },
-  source: {
-    type: String,
-    doc: 'Source description or identifier.',
-  },
-  priority: {
-    type: String,
-    doc: 'Priority or importance marker.',
-  },
 };
+
+type RelationshipField = 'addresses' | 'supports' | 'derived-from' | 'produces' | 'modified-by';
+
+const directiveRelationshipFields: Partial<Record<MiraDirectiveName, RelationshipField[]>> = {
+  claim: ['addresses'],
+  evidence: ['supports', 'derived-from'],
+  study: ['produces'],
+  'follows-protocol': ['modified-by'],
+};
+
+const relationshipOptionDefinitions: Record<RelationshipField, NonNullable<DirectiveSpec['options']>[string]> = {
+  addresses: { type: String, doc: 'Comma-separated identifiers of questions this claim addresses.' },
+  supports: { type: String, doc: 'Comma-separated identifiers of claims this evidence supports.' },
+  'derived-from': { type: String, doc: 'Comma-separated identifiers of studies this evidence was derived from.' },
+  produces: { type: String, doc: 'Comma-separated identifiers of evidence this study produces.' },
+  'modified-by': { type: String, doc: 'Comma-separated identifiers of modifications to the protocol.' },
+};
+
+function toStringArray(value: unknown): string[] | undefined {
+  if (typeof value !== 'string' || value.trim().length === 0) return undefined;
+  return value.split(',').map((s) => s.trim()).filter(Boolean);
+}
 
 function toOptions(options: DirectiveData['options']): Record<string, MiraOptionValue> {
   if (!options) return {};
@@ -91,6 +63,11 @@ function bodyChildren(body: DirectiveData['body']): GenericNode[] {
 }
 
 function createMiraDirective(name: MiraDirectiveName): DirectiveSpec {
+  const relationshipFields = directiveRelationshipFields[name] ?? [];
+  const extraOptions = Object.fromEntries(
+    relationshipFields.map((field) => [field, relationshipOptionDefinitions[field]]),
+  );
+
   return {
     name,
     doc: `Structured MIRA ${name} directive.`,
@@ -102,7 +79,7 @@ function createMiraDirective(name: MiraDirectiveName): DirectiveSpec {
       type: 'myst',
       doc: 'Nested MyST Markdown content.',
     },
-    options: commonOptionDefinitions,
+    options: { ...commonOptionDefinitions, ...extraOptions },
     run(data) {
       const options = toOptions(data.options);
       const title = stringValue(options.title) ?? stringValue(data.arg);
@@ -121,6 +98,11 @@ function createMiraDirective(name: MiraDirectiveName): DirectiveSpec {
       if (identifier) {
         node.identifier = identifier;
         node.label = identifier;
+      }
+
+      for (const field of relationshipFields) {
+        const value = toStringArray(options[field]);
+        if (value) (node as Record<string, unknown>)[field] = value;
       }
 
       return [node];

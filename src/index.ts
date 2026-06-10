@@ -1,11 +1,13 @@
 export {
   isMiraDirectiveNode,
-  miraDirectiveNames,
   miraDirectives,
+} from './directives.js';
+export {
+  miraDirectiveNames,
   type MiraDirectiveName,
   type MiraDirectiveNode,
   type MiraOptionValue,
-} from './directives.js';
+} from './directives.types.js';
 export {
   createMiraProcessor,
   findMiraDirectives,
