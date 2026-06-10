@@ -10,7 +10,6 @@ export {
   createMiraProcessor,
   findMiraDirectives,
   parseMystMarkdown,
-  parseMystMarkdownDirect,
   type MiraParserOptions,
   type MystParserOptions,
 } from './parser.js';

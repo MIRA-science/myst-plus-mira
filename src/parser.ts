@@ -26,10 +26,6 @@ export function parseMystMarkdown(markdown: string, options: MiraParserOptions =
   return createMiraProcessor(options).parse(markdown) as GenericParent;
 }
 
-export function parseMystMarkdownDirect(markdown: string, options: MiraParserOptions = {}) {
-  return mystParse(markdown, withMiraDirectives(options));
-}
-
 export function findMiraDirectives(tree: GenericNode): MiraDirectiveNode[] {
   const nodes: MiraDirectiveNode[] = [];
 
